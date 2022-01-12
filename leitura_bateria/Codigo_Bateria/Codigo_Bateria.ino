@@ -14,7 +14,7 @@ void loop() {
   valor_porcentagem = ((valor_referencia/1023)*100); // Valor da porcentagem da bateria
  
   Serial.print("n0.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da tensão
-  Serial.print(valor_bateria); // Valor da tensão
+  Serial.println(valor_bateria); // Valor da tensão
   Serial.print("z0.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da porcentagem da bateria
   Serial.print(valor_porcentagem); //Valor da porcentagem da bateria 
 }
