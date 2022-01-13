@@ -1,6 +1,6 @@
 #define leitura_pot A0
 
-const int controle_cooler = 9;
+const int controle_cooler = 6;
 int count = 0;
 unsigned long start_time;
 int rpm;
@@ -23,11 +23,10 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //float aceleracao = (analogRead(leitura_pot))/4;
-  //aceleracao = aceleracao * 51; //fator de escala
-  //int aceleracao_int = (int)aceleracao;
-  //analogWrite (controle_cooler, aceleracao_int);
+  float aceleracao = (analogRead(leitura_pot))/4;
+  aceleracao = aceleracao * 51; //fator de escala
+  int aceleracao_int = (int)aceleracao;
+  analogWrite (controle_cooler, aceleracao_int);
   for (int pwm = 64; pwm <= 320; pwm +=64)
   {
     OCR1A = pwm;
@@ -43,8 +42,8 @@ void loop() {
     Serial.print(rpm);
     Serial.println("rpm");
   }
-  //Serial.print("aceleracao pot");
-  //Serial.println(aceleracao);
+  Serial.print("aceleracao pot");
+  Serial.println(aceleracao);
 }
 void counter(){
   count++;
