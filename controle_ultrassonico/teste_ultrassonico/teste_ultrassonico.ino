@@ -6,7 +6,7 @@
  
 //Define os pinos para o trigger e echo
 #define pino_trigger 4
-#define pino_echo 5
+#define pino_echo 3
 #define pino_led 6
  
 //Inicializa o sensor nos pinos definidos acima
@@ -32,7 +32,7 @@ void loop()
   {
     mediaDist += cmMsec[i];
   }
-  mediaDist = mediaDist/5;
+  mediaDist = mediaDist/5; //variavel final da distância
   //Exibe informacoes no serial monitor
   if(mediaDist < 20){
     digitalWrite(pino_led, HIGH);
