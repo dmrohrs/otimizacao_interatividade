@@ -1,10 +1,7 @@
-// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
-// Released under the GPLv3 license to match the rest of the
-// Adafruit NeoPixel library
 
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
- #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+#include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
 // Which pin on the Arduino is connected to the NeoPixels?
@@ -34,20 +31,24 @@ void setup() {
 
 void loop() {
   
-  
-  /* Modo de cor unica em toda a barra
+
   pixels.clear(); // Set all pixel colors to 'off'
-  
-  int nextion_colorR = 0;
-  int nextion_colorG = 255;
-  int nextion_colorB = 0;
+
+    char Received = Serial.read();
+
+    int nextion_colorR = 0;
+    int nextion_colorG = 255;
+    int nextion_colorB = 0;
+
+    //modo de cor única
   
    pixels.fill(pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB), 0, NUMPIXELS);
   
    pixels.show();   // Send the updated pixel colors to the hardware.
-   */
+   
 
    // modo em que a cor vai "deslizando" pela barra
+   /*
    for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
 
     // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
@@ -58,5 +59,5 @@ void loop() {
     pixels.show();   // Send the updated pixel colors to the hardware.
 
     delay(50); // Pause before next pass through loop
-  }
+  }*/
 }
