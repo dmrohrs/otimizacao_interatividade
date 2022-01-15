@@ -120,7 +120,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 //===================================================================================================
 //                           Dados da Bateria
-#define referencia A4 
+#define referencia A4 //Verificar qual pino vai conectar na hora
 int valor_referencia; // Variavel que contem a leitura dos parâmetros(0-1023) da bateria
 int valor_bateria; // //Valor real da Tensão da Bateria
 int valor_porcentagem; // Valor da porcentagem da bateria
@@ -168,17 +168,21 @@ void setup() {
     dfmp3.begin();
   
     uint16_t volume = dfmp3.getVolume();
+    Serial.print("volume ");
+    Serial.println(volume);
     dfmp3.setVolume(24);
   
     uint16_t count = dfmp3.getTotalTrackCount(DfMp3_PlaySource_Sd);
+    Serial.print("files ");
+    Serial.println(count);
     //=============================================================
     //setup dos LEDS
     pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    strip.setBrightness(255); //varia de 0 - 255
+
     //============================================================
     //setup dados bateria
     pinMode(referencia, INPUT); // Declaração da variavel referencia como entrada
-    pinMode(pinTermistor, INPUT);
+    
 }
 
 // PWM output @ 25 kHz, only on pins 9 and 10.
@@ -197,12 +201,8 @@ void analogWrite25k(int pin, int value)
             break;
     }
 }
-void loop() {
-  //====================================================================
-  // Led padrão
-  pixels.fill(pixels.Color(0, 255, 0), 0, NUMPIXELS); //cor padrão led
-  pixels.show();
 
+void loop() {
   //====================================================================
   //                Programação inicial (ultrassonico e auto falante)
   
@@ -218,18 +218,22 @@ void loop() {
     mediaDist += cmMsec[i];
   }
   mediaDist = mediaDist/5;
-  
+
   if(mediaDist < 20){            //toca a faixa de áudio quando a distancia for < 20cm
     delay(10000);
     dfmp3.playMp3FolderTrack(1);  // sd:/mp3/0001.mp3
     waitMilliseconds(10000); //ajustar para o tamanho da faixa de audio
     Serial.println("page page01"); 
   }
-  //===================================================================
-  // Aceleração fora do nextion
+    
+  //====================================================================
+  //Aceleração, Freio e cooler  
+  
   float aceleracao = (analogRead(pot_acelerador));
   int aceleracao_int = (int)aceleracao;
+  int aceleracao_nextion = map(aceleracao_int, 0, 1023, 0, 100);
   int aceleracao_cooler = map(aceleracao_int, 0, 1023, 0, 320); //converte o valor recebido
+  Serial.println(aceleracao_nextion);  //envia para p nextion
   analogWrite25k(pwm_cooler, aceleracao_cooler);
   
   float freio = (analogRead(pot_freio));
@@ -248,193 +252,84 @@ void loop() {
     pixels_freio.show();   // Send the updated pixel colors to the hardware.
    }
 
-   //===============================================================================
-   // Parte com o nextion
+    
+  //======================================================================
+  //LEDS
+
+  pixels.fill(pixels.Color(0, 255, 0), 0, NUMPIXELS); //cor padrão led
+
   if(Serial.avaliable()>0) //se receber qualquer coisa
   {
     char Received = Serial.read();
-    
-    if(Received == "paginavelocidade")
-    {
-      while(Serial.read() != "voltar") //quando a pessoa sair da pagina
-      {
-      float aceleracao = (analogRead(pot_acelerador));
-      int velocidade_int = (int)aceleracao;
-      int velocidade_nextion = map(velocidade_int, 0, 1023, 0, 360);
-      if(velocidade_nextion > 0 && velocidade_nextion < 40)
-      {
-        Serial.print("z0.val=");
-        Serial.print(velocidade_nextion + 316);
-      }
-      else if(velocidade_nextion > 40)
-      {
-        Serial.print("z0.val=");
-        Serial.print(velocidade_nextion - 40);
-        if(velocidade_nextion > 218)
-        {
-          Serial.print("z0.val=218");
-        }
-      }
-      int aceleracao_int =  (int)aceleracao;
-      int aceleracao_nextion = map(aceleracao_int, 0, 1023, 292, 65);
-      Serial.print("z1.val=");
-      Serial.print(aceleracao_nextion);
-      int velocidade_digital = map(aceleracao_int, 0, 1023, 0, 260);
-      Serial.print("n0.val=");
-      Serial.print(aceleracao_nextion)
-      int aceleracao_cooler = map(aceleracao_int, 0, 1023, 0, 320); //converte o valor recebido
-      analogWrite25k(pwm_cooler, aceleracao_cooler);
-      float freio = (analogRead(pot_freio));
-      int freio_int = (int)freio;
-      int freio_nextion = map(freio_int, 0, 1023, 0, 100); //variavel enviada para o nextion
-      if(freio_nextion > 10)
-        {
-          pixels_freio.fill(pixels.Color(255, 0,0), 0, NUMPIXELS_FREIO);
-  
-          pixels_freio.show();   // Send the updated pixel colors to the hardware.
-        }
-      else
-        {
-          pixels_freio.fill(pixels.Color(0, 0,0), 0, NUMPIXELS_FREIO);
-  
-          pixels_freio.show();   // Send the updated pixel colors to the hardware.
-        }
-      }
-    }
-    
-    else if(Received == "paginaaceleracao")
-    {
-      while(Serial.read() != "voltar")
-      {
-        float aceleracao = (analogRead(pot_acelerador));
-        int aceleracao_int = (int)aceleracao;
-        int aceleracao_nextion = map(aceleracao_int, 0, 1023, 0, 360);
-        Serial.print("j0.val=");
-        Serial.print(aceleracao_nextion);
 
-        float freio = (analogRead(pot_freio));
-        int freio_int = (int)freio;
-        int freio_nextion = map(freio_int, 0, 1023, 0, 100); //variavel enviada para o nextion
-        Serial.print("j1.val=");
-        Serial.print(freio_nextion);
-        if(freio_nextion > 10)
-          {
-            pixels_freio.fill(pixels.Color(255, 0,0), 0, NUMPIXELS_FREIO);
-  
-            pixels_freio.show();   // Send the updated pixel colors to the hardware.
-          }
-        else
-          {
-            pixels_freio.fill(pixels.Color(0, 0,0), 0, NUMPIXELS_FREIO);
-  
-            pixels_freio.show();   // Send the updated pixel colors to the hardware.
-          }
-      }
-    }
-    
-    else if(Received == "paginagrafico")
+    if(Received == "pageled")
     {
-      while(Serial.read() != "voltar")
+      Received = Serial.read();
+      if(Received == "modo 1")
       {
-        
-      }
-    }
-    
-    else if(Received == "paginabateria")
-    {
-      while(Serial.read() != "voltar")
-      {
-        valor_referencia = analogRead(referencia); // Variavel recebe a leitura dos parâmetros(0-1023) da bateria
-        valor_bateria = (0.00488 * valor_referencia * 16.8)/5; //Valor real da Tensão da Bateria (Conta de conversão)
-        valor_porcentagem = ((valor_referencia/1023)*100); // Valor da porcentagem da bateria
- 
-        Serial.print("x1.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da tensão
-        Serial.println(valor_bateria*10); // Valor da tensão
-        Serial.print("x2.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da porcentagem da bateria
-        Serial.print(valor_porcentagem*10); //Valor da porcentagem da bateria
-
-        // Le o sensor algumas vezes
-        int soma_termistor = 0;
-        for (int i = 0; i < nAmostras_termistor; i++) {
-        soma_termistor += analogRead(pinTermistor);
-        }
- 
-        // Determina a resistência do termistor
-        double v_termistor = (vcc_termistor*soma_termistor)/(nAmostras_termistor*1024.0);
-        double rt_termistor = (vcc_termistor*R_termistor)/v_termistor - R_termistor;
- 
-        // Calcula a temperatura
-        double t_termistor = beta_termistor / log(rt_termistor/rx_termistor);
-        // Imprime os valores
-        Serial.print("x0.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da Temperatura
-        Serial.println ((t_termistor - 273.0)*10); //Valor da Temperatura
-        Serial.print("j1.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da Temperatura
-        Serial.println (t_termistor - 273.0); //Valor da Temperatura
-      }
-    }
-    else if(Received == "paginaled")
-    {
-      while(Serial.read() != "voltar")
-      {
-        recebido = Serial.read();
-        if(recebido == "dinamico")
-        {
-          recebido = Serial.read();
-          if(recebido == "R")
-          {
-            int nextion_colorR = Serial.parseInt(); 
-          }
-          if(recebido == "G")
-          {
-            int nextion_colorG = Serial.parseInt(); 
-          }
-          if(recebido == "B")
-          {
-            int nextion_colorG = Serial.parseInt(); 
-          }
-          while(Serial.read() != "cancelar")
-          {
-            for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-
-            // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-            // Here we're using a moderately bright green color:
-            pixels.setPixelColor(i, pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB));
-            pixels.setPixelColor(i - 5, pixels.Color(0, 0, 0));
- 
-            pixels.show();   // Send the updated pixel colors to the hardware.
-
-            delay(50); // Pause before next pass through loop
-          }
-          // Led padrão
-          pixels.fill(pixels.Color(0, 255, 0), 0, NUMPIXELS); //cor padrão led
-          pixels.show();
-        }
-      }
-      else if(recebido == "estatico")
-        {
-          recebido = Serial.read();
-          if(recebido == "R")
-          {
-            int nextion_colorR = Serial.parseInt(); 
-          }
-          if(recebido == "G")
-          {
-            int nextion_colorG = Serial.parseInt(); 
-          }
-          if(recebido == "B")
-          {
-            int nextion_colorB = Serial.parseInt(); 
-          }
-          while(Serial.read() != "cancelar")
-          {
-            pixels.fill(pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB), 0, NUMPIXELS);
-            pixels.show();
-          }
-          // Led padrão
-          pixels.fill(pixels.Color(0, 255, 0), 0, NUMPIXELS); //cor padrão led
-          pixels.show();
-        }
+        int nextion_colorR = Serial.parseInt();
+        int nextion_colorB = Serial.parseInt();
+        int nextion_colorG = Serial.parseInt();
       }
     }
   }
-}
+  pixels.clear(); // Set all pixel colors to 'off'
+  
+  char Received = Serial.read();
+  
+  int nextion_colorR = 0;
+  int nextion_colorG = 255;
+  int nextion_colorB = 0;
+
+    //modo de cor única
+  
+   pixels.fill(pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB), 0, NUMPIXELS);
+  
+   pixels.show();   // Send the updated pixel colors to the hardware.
+   
+
+   // modo em que a cor vai "deslizando" pela barra
+   /*
+   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+
+    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+    // Here we're using a moderately bright green color:
+    pixels.setPixelColor(i, pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB));
+    pixels.setPixelColor(i - 5, pixels.Color(0, 0, 0));
+ 
+    pixels.show();   // Send the updated pixel colors to the hardware.
+
+    delay(50); // Pause before next pass through loop
+  }*/
+
+  //============================================================================
+  //Aquisição de dados Bateria
+  valor_referencia = analogRead(referencia); // Variavel recebe a leitura dos parâmetros(0-1023) da bateria
+  valor_bateria = (0.00488 * valor_referencia * 16.8)/5; //Valor real da Tensão da Bateria (Conta de conversão)
+  valor_porcentagem = ((valor_referencia/1023)*100); // Valor da porcentagem da bateria
+ 
+  Serial.print("n0.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da tensão
+  Serial.println(valor_bateria); // Valor da tensão
+  Serial.print("z0.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da porcentagem da bateria
+  Serial.print(valor_porcentagem); //Valor da porcentagem da bateria
+
+  //============================================================================
+  //Termistor
+  // Le o sensor algumas vezes
+  int soma_termistor = 0;
+  for (int i = 0; i < nAmostras_termistor; i++) {
+    soma_termistor += analogRead(pinTermistor);
+  }
+ 
+  // Determina a resistência do termistor
+  double v_termistor = (vcc_termistor*soma_termistor)/(nAmostras_termistor*1024.0);
+  double rt_termistor = (vcc_termistor*R_termistor)/v_termistor - R_termistor;
+ 
+  // Calcula a temperatura
+  double t_termistor = beta_termistor / log(rt_termistor/rx_termistor);
+  // Imprime os valores
+  Serial.print("n1.val="); //Definir essa variavel para ser utilizada no Nextion para receber o valor da Temperatura
+  Serial.println (t_termistor - 273.0); //Valor da Temperatura
+  //==============================================================================
+  
+  }
