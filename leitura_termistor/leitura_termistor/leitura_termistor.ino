@@ -29,7 +29,6 @@ void loop() {
   int soma_termistor = 0;
   for (int i = 0; i < nAmostras_termistor; i++) {
     soma_termistor += analogRead(pinTermistor);
-    delay (10);
   }
  
   // Determina a resistência do termistor

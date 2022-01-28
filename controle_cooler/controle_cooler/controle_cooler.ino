@@ -1,5 +1,7 @@
+#define pwm_cooler 10
 #define pot_acelerador A0  // Pin do potenciometro do acelerador
-
+#define pot_freio      A5  // Pin do potenciometro do freio
+#define led_freio      2   // Pino do freio
 
 void setup() {
    // Configure Timer 1 for PWM @ 25 kHz.
@@ -14,10 +16,11 @@ void setup() {
     ICR1   = 320;         // TOP = 320
 
     // Set the PWM pins as output.
-    pinMode( 9, OUTPUT);
-    pinMode(5, OUTPUT);
+    pinMode(pwm_cooler, OUTPUT);
     pinMode(pot_acelerador, INPUT);
- 
+    pinMode(pot_freio, INPUT);
+    pinMode(led_freio, OUTPUT);
+    Serial.begin(9600);
 }
 
 // PWM output @ 25 kHz, only on pins 9 and 10.
@@ -28,7 +31,7 @@ void analogWrite25k(int pin, int value)
         case 9:
             OCR1A = value;
             break;
-        case 5:
+        case 10:
             OCR1B = value;
             break;
         default:
@@ -41,7 +44,19 @@ void loop() {
     
   float aceleracao = (analogRead(pot_acelerador));
   int aceleracao_int = (int)aceleracao;
-  int velocidade_cooler = map(aceleracao_int, 0, 1023, 0, 320);
-    
-    analogWrite25k(10, velocidade_cooler);
+  int aceleracao_cooler = map(aceleracao_int, 0, 1023, 0, 320);
+  //Serial.println(aceleracao_cooler);
+  analogWrite25k(pwm_cooler, aceleracao_cooler);
+  
+  float freio = (analogRead(pot_freio));
+  int freio_int = (int)freio;
+  int freio_nextion = map(freio_int, 0, 1023, 0, 100);
+  Serial.println(freio_nextion);
+  if(freio_nextion > 10)
+    {
+    digitalWrite(led_freio, HIGH);
+    }
+   else
+    digitalWrite(led_freio, LOW);
+  
 }
