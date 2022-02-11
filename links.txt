@@ -1,0 +1,13 @@
+https://forum.arduino.cc/t/can-serial-begin-be-initiated-multiple-times/441531
+serial
+
+https://github.com/FastLED/FastLED/blob/master/README.md
+outra biblioteca para leds
+
+
+https://github.com/FastLED/FastLED/wiki/Chipset-reference
+compatibilidade biblioteca
+
+https://www.youtube.com/watch?v=nnapNHn-Ge0&t=253s
+exemplo ws2811
+

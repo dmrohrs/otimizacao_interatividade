@@ -1,136 +1,118 @@
-// this example will play a track and then 
-// every five seconds play another track
-//
-//https://github.com/Makuna/DFMiniMp3/blob/master/examples/PlayMp3/PlayMp3.ino
-//
-// it expects the sd card to contain these three mp3 files
-// but doesn't care whats in them
-//
-// sd:/mp3/0001.mp3
-// sd:/mp3/0002.mp3
-// sd:/mp3/0003.mp3
+/***************************************************
+DFPlayer - A Mini MP3 Player For Arduino
+ <https://www.dfrobot.com/index.php?route=product/product&product_id=1121>
 
-#include <SoftwareSerial.h>
-#include <DFMiniMp3.h>
-#include <Ultrasonic.h>
-// forward declare the notify class, just the name
-//
-class Mp3Notify; 
+ ***************************************************
+ This example shows the basic function of library for DFPlayer.
 
-// define a handy type using serial and our notify class
-//
-typedef DFMiniMp3<HardwareSerial, Mp3Notify> DfMp3; 
+ Created 2016-12-07
+ By [Angelo qiao](Angelo.qiao@dfrobot.com)
 
-//Definindo pinos
-#define pino_trigger 4
-#define pino_echo 3
-Ultrasonic ultrasonic(pino_trigger, pino_echo);
+ GNU Lesser General Public License.
+ See <http://www.gnu.org/licenses/> for details.
+ All above must be included in any redistribution
+ ****************************************************/
 
-SoftwareSerial secondarySerial(9, 10); // RX, TX
-typedef DFMiniMp3<SoftwareSerial, Mp3Notify> DfMp3;
-DfMp3 dfmp3(secondarySerial);
+/***********Notice and Trouble shooting***************
+ 1.Connection and Diagram can be found here
+ <https://www.dfrobot.com/wiki/index.php/DFPlayer_Mini_SKU:DFR0299#Connection_Diagram>
+ 2.This code is tested on Arduino Uno, Leonardo, Mega boards.
+ ****************************************************/
 
-// implement a notification class,
-// its member methods will get called 
-//
-class Mp3Notify
+#include "Arduino.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+void printDetail(uint8_t type, int value);
+
+void setup()
 {
-public:
-  static void PrintlnSourceAction(DfMp3_PlaySources source, const char* action)
-  {
-    if (source & DfMp3_PlaySources_Sd) 
-    {
-        Serial.print("SD Card, ");
-    }
-    if (source & DfMp3_PlaySources_Usb) 
-    {
-        Serial.print("USB Disk, ");
-    }
-    if (source & DfMp3_PlaySources_Flash) 
-    {
-        Serial.print("Flash, ");
-    }
-    Serial.println(action);
-  }
-  static void OnError(DfMp3& mp3, uint16_t errorCode)
-  {
-    // see DfMp3_Error for code meaning
-    Serial.println();
-    Serial.print("Com Error ");
-    Serial.println(errorCode);
-  }
-  static void OnPlayFinished(DfMp3& mp3, DfMp3_PlaySources source, uint16_t track)
-  {
-    Serial.print("Play finished for #");
-    Serial.println(track);  
-  }
-  static void OnPlaySourceOnline(DfMp3& mp3, DfMp3_PlaySources source)
-  {
-    PrintlnSourceAction(source, "online");
-  }
-  static void OnPlaySourceInserted(DfMp3& mp3, DfMp3_PlaySources source)
-  {
-    PrintlnSourceAction(source, "inserted");
-  }
-  static void OnPlaySourceRemoved(DfMp3& mp3, DfMp3_PlaySources source)
-  {
-    PrintlnSourceAction(source, "removed");
-  }
-};
-
-void setup() 
-{
+  mySoftwareSerial.begin(9600);
   Serial.begin(115200);
 
-  Serial.println("initializing...");
-  
-  dfmp3.begin();
+  Serial.println();
+  Serial.println(F("DFRobot DFPlayer Mini Demo"));
+  Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
 
-  uint16_t volume = dfmp3.getVolume();
-  Serial.print("volume ");
-  Serial.println(volume);
-  dfmp3.setVolume(24);
-  
-  uint16_t count = dfmp3.getTotalTrackCount(DfMp3_PlaySource_Sd);
-  Serial.print("files ");
-  Serial.println(count);
-  
-  Serial.println("starting...");
+  if (!myDFPlayer.begin(mySoftwareSerial)) {  //Use softwareSerial to communicate with mp3.
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    while(true);
+  }
+  Serial.println(F("DFPlayer Mini online."));
+
+  myDFPlayer.volume(10);  //Set volume value. From 0 to 30
+  myDFPlayer.play(1);  //Play the first mp3
 }
 
-void waitMilliseconds(uint16_t msWait)
+void loop()
 {
-  uint32_t start = millis();
-  
-  while ((millis() - start) < msWait)
-  {
-    // if you have loops with delays, its important to 
-    // call dfmp3.loop() periodically so it allows for notifications 
-    // to be handled without interrupts
-    dfmp3.loop(); 
-    delay(1);
+  static unsigned long timer = millis();
+
+  if (millis() - timer > 3000) {
+    timer = millis();
+    myDFPlayer.next();  //Play next mp3 every 3 second.
+  }
+
+  if (myDFPlayer.available()) {
+    printDetail(myDFPlayer.readType(), myDFPlayer.read()); //Print the detail message from DFPlayer to handle different errors and states.
   }
 }
 
-void loop() 
-{
-  float cmMsec[5];
-  float mediaDist = 0;
-  long microsec = ultrasonic.timing();
-  for(int i = 0; i <4 ; i++)
-  {
-    cmMsec[i] = ultrasonic.convert(microsec, Ultrasonic::CM);
-  }
-  for(int i = 0; i <4 ; i++)
-  {
-    mediaDist += cmMsec[i];
-  }
-  mediaDist = mediaDist/5;
-
-  if(mediaDist < 20){
-    Serial.println("track 1"); 
-    dfmp3.playMp3FolderTrack(1);  // sd:/mp3/0001.mp3
-  
-    waitMilliseconds(10000);
+void printDetail(uint8_t type, int value){
+  switch (type) {
+    case TimeOut:
+      Serial.println(F("Time Out!"));
+      break;
+    case WrongStack:
+      Serial.println(F("Stack Wrong!"));
+      break;
+    case DFPlayerCardInserted:
+      Serial.println(F("Card Inserted!"));
+      break;
+    case DFPlayerCardRemoved:
+      Serial.println(F("Card Removed!"));
+      break;
+    case DFPlayerCardOnline:
+      Serial.println(F("Card Online!"));
+      break;
+    case DFPlayerPlayFinished:
+      Serial.print(F("Number:"));
+      Serial.print(value);
+      Serial.println(F(" Play Finished!"));
+      break;
+    case DFPlayerError:
+      Serial.print(F("DFPlayerError:"));
+      switch (value) {
+        case Busy:
+          Serial.println(F("Card not found"));
+          break;
+        case Sleeping:
+          Serial.println(F("Sleeping"));
+          break;
+        case SerialWrongStack:
+          Serial.println(F("Get Wrong Stack"));
+          break;
+        case CheckSumNotMatch:
+          Serial.println(F("Check Sum Not Match"));
+          break;
+        case FileIndexOut:
+          Serial.println(F("File Index Out of Bound"));
+          break;
+        case FileMismatch:
+          Serial.println(F("Cannot Find File"));
+          break;
+        case Advertise:
+          Serial.println(F("In Advertise"));
+          break;
+        default:
+          break;
+      }
+      break;
+    default:
+      break;
   }
 }
