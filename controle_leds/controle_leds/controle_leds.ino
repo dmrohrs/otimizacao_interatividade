@@ -8,7 +8,19 @@
 #define PIN        9 // On Trinket or Gemma, suggest changing this to 1
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS 20 // Popular NeoPixel ring size
+#define NUMPIXELS 100 // Popular NeoPixel ring size
+
+#define brilhomaximo 255
+
+void ModoCorUnica();
+void ModoDeslizante();
+void ModoDeslizanteIdaVolta();
+void ModoPulsante();
+void Incrementa();
+
+const byte interruptPin = 2;
+int Funcao = 0;
+int brilho = 0;
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
@@ -17,48 +29,118 @@
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 #define DELAYVAL 200 // Time (in milliseconds) to pause between pixels
+int nextion_colorR = 191;
+int nextion_colorG = 255;
+int nextion_colorB = 0;
 
 void setup() {
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
   // Any other board, you can remove this part (but no harm leaving it):
-#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-  clock_prescale_set(clock_div_1);
-#endif
   // END of Trinket-specific code.
-
+  pixels.clear();
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  strip.setBrightness(255); // Set BRIGHTNESS to about 1/5 (max = 255)
+  pixels.setBrightness(51); // Set BRIGHTNESS to about 1/5 (max = 255)
+  pinMode(interruptPin, INPUT);
+  //attachInterrupt(digitalPinToInterrupt(interruptPin),Incrementa, CHANGE);
 }
 
+    
 void loop() {
-  
+// pixels.clear(); // Set all pixel colors to 'off'
+ /*
+  switch (Funcao) 
+ {
+  case 0:
+  ModoCorUnica();
 
-  pixels.clear(); // Set all pixel colors to 'off'
+  case 1:
+  ModoDeslizante();
 
-    char Received = Serial.read();
+  case 2:
+  ModoPulsante();
 
-    int nextion_colorR = 0;
-    int nextion_colorG = 255;
-    int nextion_colorB = 0;
-
-    //modo de cor única
-  
-   pixels.fill(pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB), 0, NUMPIXELS);
-  
+ }
+  */
+  //ModoCorUnica();
+  //ModoPulsante();
+  //ModoDeslizante();
+  ModoDeslizanteIdaVolta();
+}
+void ModoCorUnica()
+  {
+   pixels.fill(pixels.Color(nextion_colorR, nextion_colorB, nextion_colorG), 0, NUMPIXELS);
    pixels.show();   // Send the updated pixel colors to the hardware.
-   
-
+   //delay(1000);
+  }
    // modo em que a cor vai "deslizando" pela barra
-   /*
-   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+   void ModoDeslizante()
+   {
+      for(int i=0; i<(NUMPIXELS+10); i++) 
+      { // For each pixel...
+    
+      // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+      // Here we're using a moderately bright green color:
+      pixels.setPixelColor(i, pixels.Color(nextion_colorR, nextion_colorB, nextion_colorG));
+      pixels.setPixelColor(i-10, pixels.Color(0, 0, 0));
+   
+      pixels.show();   // Send the updated pixel colors to the hardware.
+  
+      delay(10); // Pause before next pass through loop
+    }
+   }
+  
 
-    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-    // Here we're using a moderately bright green color:
-    pixels.setPixelColor(i, pixels.Color(nextion_colorR, nextion_colorG, nextion_colorB));
-    pixels.setPixelColor(i - 5, pixels.Color(0, 0, 0));
- 
-    pixels.show();   // Send the updated pixel colors to the hardware.
-
-    delay(50); // Pause before next pass through loop
-  }*/
+  void ModoPulsante(){
+    while(brilho < 255){
+      pixels.fill(pixels.Color(nextion_colorR, nextion_colorB, nextion_colorG), 0, NUMPIXELS);
+      pixels.setBrightness(brilho);
+      pixels.show();   // Send the updated pixel colors to the hardware.
+      delay(5);
+      brilho+=1;
+    }
+    while(brilho > 5){
+      pixels.fill(pixels.Color(nextion_colorR, nextion_colorB, nextion_colorG), 0, NUMPIXELS);
+      pixels.setBrightness(brilho);
+      pixels.show();   // Send the updated pixel colors to the hardware.
+      delay(5);
+      brilho-=1;
+    }
+    
+  }
+  void ModoDeslizanteIdaVolta()
+   {
+      for(int i=0; i<(NUMPIXELS+1); i++) 
+      { // For each pixel...
+    
+      // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+      // Here we're using a moderately bright green color:
+      pixels.setPixelColor(i, pixels.Color(nextion_colorR, nextion_colorB, nextion_colorG));
+      pixels.setPixelColor(i-1, pixels.Color(0, 0, 0));
+   
+      pixels.show();   // Send the updated pixel colors to the hardware.
+  
+      delay(50); // Pause before next pass through loop
+    }
+    for(int i=NUMPIXELS; i > 1; i--) 
+      { // For each pixel...
+    
+      // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+      // Here we're using a moderately bright green color:
+      pixels.setPixelColor(i, pixels.Color(nextion_colorR, nextion_colorB, nextion_colorG));
+      pixels.setPixelColor(i+1, pixels.Color(0, 0, 0));
+      pixels.show();   // Send the updated pixel colors to the hardware.
+  
+      delay(50); // Pause before next pass through loop
+    }
+   }
+void Incrementa()
+{
+ if(Funcao < 2)
+ {
+  Funcao++;
+ }
+ else
+ {
+  Funcao = 0;
+ }
 }
